@@ -5,602 +5,507 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Press Sentiment Analysis</title>
   
-  <!-- Include Radix UI styles from CDN -->
-  <script type="module">
-    import { createRoot } from 'https://esm.sh/@radix-ui/react@1.0.0';
-    window.RadixRoot = createRoot;
-  </script>
-  
-  <!-- Include React from CDN -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  
-  <!-- Include Radix UI components from CDN -->
-  <script src="https://unpkg.com/@radix-ui/react-tabs@1.0.4/dist/index.umd.js"></script>
-  <script src="https://unpkg.com/@radix-ui/react-dialog@1.0.4/dist/index.umd.js"></script>
-  <script src="https://unpkg.com/@radix-ui/react-toast@1.1.4/dist/index.umd.js"></script>
-
   <style>
-    :root {
-      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-      --background: white;
-      --foreground: black;
-      --primary: #2563eb;
-      --primary-foreground: white;
-      --muted: #f3f4f6;
-      --muted-foreground: #6b7280;
-      --border: #e5e7eb;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --background: #1a1a1a;
-        --foreground: #e5e7eb;
-        --primary: #3b82f6;
-        --primary-foreground: white;
-        --muted: #374151;
-        --muted-foreground: #9ca3af;
-        --border: #374151;
-      }
-    }
-    
     body {
-      font-family: var(--font-sans);
-      background-color: var(--background);
-      color: var(--foreground);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       margin: 0;
       padding: 0;
+      background-color: #f5f5f5;
+      color: #333;
     }
     
     .container {
-      max-width: 1200px;
+      max-width: 800px;
       margin: 0 auto;
       padding: 2rem;
     }
     
     h1 {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
       text-align: center;
+      margin-bottom: 2rem;
     }
     
     .tabs {
-      margin-top: 2rem;
-    }
-    
-    .tabs-list {
       display: flex;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 1rem;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 2rem;
     }
     
-    .tab-trigger {
+    .tab-button {
       padding: 0.75rem 1rem;
       border: none;
       background: none;
       cursor: pointer;
       font-size: 1rem;
       font-weight: 500;
-      color: var(--muted-foreground);
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s;
+      color: #555;
     }
     
-    .tab-trigger[data-state="active"] {
-      color: var(--foreground);
-      border-bottom: 2px solid var(--primary);
+    .tab-button.active {
+      color: #2563eb;
+      border-bottom: 2px solid #2563eb;
     }
     
     .tab-content {
-      padding: 1rem 0;
+      display: none;
     }
     
-    input, textarea, button, select {
-      font-family: inherit;
-      font-size: 1rem;
-      padding: 0.5rem;
-      border: 1px solid var(--border);
-      border-radius: 0.25rem;
-      background-color: var(--background);
-      color: var(--foreground);
-      margin-bottom: 1rem;
+    .tab-content.active {
+      display: block;
     }
     
-    button {
-      background-color: var(--primary);
-      color: var(--primary-foreground);
-      cursor: pointer;
-      font-weight: 500;
-      border: none;
-      transition: opacity 0.2s;
-    }
-    
-    button:hover {
-      opacity: 0.9;
-    }
-    
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+    form {
+      margin-bottom: 2rem;
     }
     
     .form-group {
       margin-bottom: 1rem;
-      display: flex;
-      flex-direction: column;
     }
     
     label {
+      display: block;
       margin-bottom: 0.5rem;
       font-weight: 500;
     }
     
-    .url-input {
+    input {
       width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
     }
     
-    .urls-container {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+    button {
+      padding: 0.5rem 1rem;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    
+    .results {
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 1.5rem;
+    }
+    
+    .error {
+      color: #e74c3c;
+      font-weight: bold;
       margin-bottom: 1rem;
+    }
+    
+    .entity {
+      display: inline-block;
+      background-color: #2563eb;
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 99px;
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
     }
     
     .url-row {
       display: flex;
       gap: 0.5rem;
+      margin-bottom: 0.5rem;
     }
     
     .url-row input {
       flex: 1;
-      margin-bottom: 0;
     }
     
-    .url-row button {
-      padding: 0.5rem;
-      margin-bottom: 0;
+    .remove-button {
+      background-color: #e74c3c;
     }
     
-    .results {
-      margin-top: 2rem;
-      border: 1px solid var(--border);
-      border-radius: 0.25rem;
-      padding: 1rem;
-      background-color: var(--muted);
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 0.5rem;
     }
     
-    .visualization {
-      margin-top: 1rem;
-      text-align: center;
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
     
     .visualization img {
       max-width: 100%;
-      border-radius: 0.25rem;
-      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    }
-    
-    .entity {
-      display: inline-block;
-      padding: 0.25rem 0.5rem;
-      border-radius: 9999px;
-      font-size: 0.875rem;
-      margin-right: 0.5rem;
-      margin-bottom: 0.5rem;
-      background-color: var(--primary);
-      color: var(--primary-foreground);
-    }
-    
-    .toast {
-      position: fixed;
-      bottom: 1rem;
-      right: 1rem;
-      padding: 1rem;
-      background-color: var(--muted);
-      border: 1px solid var(--border);
-      border-radius: 0.25rem;
-      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-      transform: translateY(100%);
-      opacity: 0;
-      transition: all 0.2s;
-    }
-    
-    .toast[data-state="open"] {
-      transform: translateY(0);
-      opacity: 1;
-    }
-    
-    .spinner {
-      border: 3px solid rgba(0, 0, 0, 0.1);
-      border-radius: 50%;
-      border-top: 3px solid var(--primary);
-      width: 20px;
-      height: 20px;
-      animation: spin 1s linear infinite;
-      display: inline-block;
-      margin-right: 0.5rem;
-      vertical-align: middle;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    .error {
-      color: #ef4444;
-      font-weight: 500;
+      margin-top: 1rem;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Press Sentiment Analysis</h1>
-    <div id="app"></div>
-  </div>
-
-  <script>
-    const { useState, useEffect, useRef } = React;
-    const { Tabs, Dialog, Toast } = window.RadixUI;
-
-    function App() {
-      const [activeTab, setActiveTab] = useState("url");
-      const [loading, setLoading] = useState(false);
-      const [results, setResults] = useState(null);
-      const [error, setError] = useState(null);
-      const [toastOpen, setToastOpen] = useState(false);
-      const [toastMessage, setToastMessage] = useState("");
-      
-      // Single URL analysis
-      const [url, setUrl] = useState("");
-      
-      // Batch URL analysis
-      const [urls, setUrls] = useState([""]);
-      
-      // Topic analysis
-      const [topic, setTopic] = useState("");
-      const [maxArticles, setMaxArticles] = useState(5);
-      
-      const showToast = (message) => {
-        setToastMessage(message);
-        setToastOpen(true);
-        setTimeout(() => setToastOpen(false), 3000);
-      };
-      
-      const handleSingleUrlAnalysis = async (e) => {
-        e.preventDefault();
-        if (!url) {
-          showToast("Please enter a URL");
-          return;
-        }
-        
-        setLoading(true);
-        setError(null);
-        setResults(null);
-        
-        try {
-          const response = await fetch("/analyze/url", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url })
-          });
-          
-          const data = await response.json();
-          
-          if (response.ok) {
-            setResults(data);
-          } else {
-            setError(data.error || "An error occurred");
-            showToast("Analysis failed");
-          }
-        } catch (err) {
-          setError(err.message);
-          showToast("Analysis failed");
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-      const handleBatchUrlAnalysis = async (e) => {
-        e.preventDefault();
-        const filteredUrls = urls.filter(u => u.trim() !== "");
-        
-        if (filteredUrls.length === 0) {
-          showToast("Please enter at least one URL");
-          return;
-        }
-        
-        setLoading(true);
-        setError(null);
-        setResults(null);
-        
-        try {
-          const response = await fetch("/analyze/batch", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ urls: filteredUrls })
-          });
-          
-          const data = await response.json();
-          
-          if (response.ok) {
-            setResults(data);
-          } else {
-            setError(data.error || "An error occurred");
-            showToast("Batch analysis failed");
-          }
-        } catch (err) {
-          setError(err.message);
-          showToast("Batch analysis failed");
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-      const handleTopicAnalysis = async (e) => {
-        e.preventDefault();
-        if (!topic) {
-          showToast("Please enter a topic");
-          return;
-        }
-        
-        setLoading(true);
-        setError(null);
-        setResults(null);
-        
-        try {
-          const response = await fetch("/analyze/topic", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ topic, max_articles: maxArticles })
-          });
-          
-          const data = await response.json();
-          
-          if (response.ok) {
-            setResults(data);
-          } else {
-            setError(data.error || "An error occurred");
-            showToast("Topic analysis failed");
-          }
-        } catch (err) {
-          setError(err.message);
-          showToast("Topic analysis failed");
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-      const addUrlField = () => {
-        setUrls([...urls, ""]);
-      };
-      
-      const removeUrlField = (index) => {
-        const newUrls = [...urls];
-        newUrls.splice(index, 1);
-        setUrls(newUrls.length ? newUrls : [""]);
-      };
-      
-      const updateUrl = (index, value) => {
-        const newUrls = [...urls];
-        newUrls[index] = value;
-        setUrls(newUrls);
-      };
-      
-      return (
-        <div>
-          <Tabs.Root defaultValue="url" onValueChange={setActiveTab}>
-            <Tabs.List className="tabs-list">
-              <Tabs.Trigger className="tab-trigger" value="url">Single URL</Tabs.Trigger>
-              <Tabs.Trigger className="tab-trigger" value="batch">Batch URLs</Tabs.Trigger>
-              <Tabs.Trigger className="tab-trigger" value="topic">Topic Search</Tabs.Trigger>
-            </Tabs.List>
-            
-            <Tabs.Content className="tab-content" value="url">
-              <form onSubmit={handleSingleUrlAnalysis}>
-                <div className="form-group">
-                  <label htmlFor="url">Article URL</label>
-                  <input
-                    type="url"
-                    id="url"
-                    className="url-input"
-                    placeholder="https://example.com/article"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    required
-                  />
-                </div>
-                <button type="submit" disabled={loading}>
-                  {loading ? <><span className="spinner"></span> Analyzing...</> : 'Analyze'}
-                </button>
-              </form>
-            </Tabs.Content>
-            
-            <Tabs.Content className="tab-content" value="batch">
-              <form onSubmit={handleBatchUrlAnalysis}>
-                <div className="form-group">
-                  <label>Article URLs</label>
-                  <div className="urls-container">
-                    {urls.map((url, index) => (
-                      <div className="url-row" key={index}>
-                        <input
-                          type="url"
-                          placeholder="https://example.com/article"
-                          value={url}
-                          onChange={(e) => updateUrl(index, e.target.value)}
-                        />
-                        {urls.length > 1 && (
-                          <button 
-                            type="button" 
-                            onClick={() => removeUrlField(index)}
-                            style={{ backgroundColor: '#ef4444' }}
-                          >
-                            ✕
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <button type="button" onClick={addUrlField}>
-                    + Add URL
-                  </button>
-                </div>
-                <button type="submit" disabled={loading}>
-                  {loading ? <><span className="spinner"></span> Analyzing...</> : 'Analyze Batch'}
-                </button>
-              </form>
-            </Tabs.Content>
-            
-            <Tabs.Content className="tab-content" value="topic">
-              <form onSubmit={handleTopicAnalysis}>
-                <div className="form-group">
-                  <label htmlFor="topic">Topic or Keyword</label>
-                  <input
-                    type="text"
-                    id="topic"
-                    placeholder="Enter a topic (e.g. 'climate change')"
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="maxArticles">Number of Articles</label>
-                  <input
-                    type="number"
-                    id="maxArticles"
-                    min="1"
-                    max="20"
-                    value={maxArticles}
-                    onChange={(e) => setMaxArticles(parseInt(e.target.value))}
-                  />
-                </div>
-                <button type="submit" disabled={loading}>
-                  {loading ? <><span className="spinner"></span> Analyzing...</> : 'Search & Analyze'}
-                </button>
-              </form>
-            </Tabs.Content>
-          </Tabs.Root>
-          
-          {error && (
-            <div className="error" style={{ marginTop: '1rem' }}>
-              Error: {error}
-            </div>
-          )}
-          
-          {results && (
-            <div className="results">
-              {activeTab === "url" && (
-                <div>
-                  <h2>Analysis Results</h2>
-                  <p><strong>URL:</strong> {results.url}</p>
-                  <p><strong>Sentiment:</strong> {results.sentiment} (Confidence: {results.confidence})</p>
-                  {results.rating && <p><strong>Rating:</strong> {results.rating}/5</p>}
-                  <p><strong>Excerpt:</strong> {results.article_excerpt}</p>
-                  
-                  {results.top_entities && (
-                    <div>
-                      <p><strong>Top Entities:</strong></p>
-                      <div>
-                        {results.top_entities.split(", ").map((entity, i) => (
-                          <span key={i} className="entity">{entity}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {results.visualization && (
-                    <div className="visualization">
-                      <img src={results.visualization} alt="Sentiment Analysis Visualization" />
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {activeTab === "batch" && (
-                <div>
-                  <h2>Batch Analysis Results</h2>
-                  <p>Analyzed {results.results ? results.results.length : 0} articles</p>
-                  
-                  {results.results && results.results.map((result, index) => (
-                    <div key={index} style={{ marginBottom: '1rem', padding: '1rem', border: '1px solid var(--border)', borderRadius: '0.25rem' }}>
-                      <p><strong>URL:</strong> {result.url}</p>
-                      <p><strong>Sentiment:</strong> {result.sentiment} (Confidence: {result.confidence})</p>
-                      {result.rating && <p><strong>Rating:</strong> {result.rating}/5</p>}
-                      <p><strong>Excerpt:</strong> {result.article_excerpt}</p>
-                      
-                      {result.top_entities && (
-                        <div>
-                          <p><strong>Top Entities:</strong></p>
-                          <div>
-                            {result.top_entities.split(", ").map((entity, i) => (
-                              <span key={i} className="entity">{entity}</span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  
-                  {results.visualization && (
-                    <div className="visualization">
-                      <img src={results.visualization} alt="Batch Sentiment Analysis Visualization" />
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {activeTab === "topic" && (
-                <div>
-                  <h2>Topic Analysis: {topic}</h2>
-                  <p>Analyzed {results.results ? results.results.length : 0} articles</p>
-                  
-                  {results.results && results.results.map((result, index) => (
-                    <div key={index} style={{ marginBottom: '1rem', padding: '1rem', border: '1px solid var(--border)', borderRadius: '0.25rem' }}>
-                      <p><strong>Title:</strong> {result.title}</p>
-                      <p><strong>Source:</strong> {result.source}</p>
-                      <p><strong>URL:</strong> <a href={result.url} target="_blank" rel="noopener noreferrer">{result.url}</a></p>
-                      <p><strong>Sentiment:</strong> {result.sentiment} (Confidence: {result.confidence})</p>
-                      {result.rating && <p><strong>Rating:</strong> {result.rating}/5</p>}
-                      <p><strong>Excerpt:</strong> {result.article_excerpt}</p>
-                      
-                      {result.top_entities && (
-                        <div>
-                          <p><strong>Top Entities:</strong></p>
-                          <div>
-                            {result.top_entities.split(", ").map((entity, i) => (
-                              <span key={i} className="entity">{entity}</span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  
-                  {results.visualization && (
-                    <div className="visualization">
-                      <img src={results.visualization} alt="Topic Sentiment Analysis Visualization" />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-          
-          <Toast.Provider>
-            <Toast.Root 
-              className="toast"
-              open={toastOpen}
-              onOpenChange={setToastOpen}
-            >
-              <Toast.Description>{toastMessage}</Toast.Description>
-            </Toast.Root>
-          </Toast.Provider>
+    
+    <div class="tabs">
+      <button class="tab-button active" data-tab="url">Single URL</button>
+      <button class="tab-button" data-tab="batch">Batch URLs</button>
+      <button class="tab-button" data-tab="topic">Topic Search</button>
+    </div>
+    
+    <div class="tab-content active" id="url-tab">
+      <form id="url-form">
+        <div class="form-group">
+          <label for="url">Article URL</label>
+          <input type="url" id="url" placeholder="https://example.com/article" required>
         </div>
-      );
+        <button type="submit" id="url-submit">Analyze</button>
+      </form>
+    </div>
+    
+    <div class="tab-content" id="batch-tab">
+      <form id="batch-form">
+        <div class="form-group">
+          <label>Article URLs</label>
+          <div id="url-container">
+            <div class="url-row">
+              <input type="url" class="batch-url" placeholder="https://example.com/article" required>
+            </div>
+          </div>
+          <button type="button" id="add-url">+ Add URL</button>
+        </div>
+        <button type="submit" id="batch-submit">Analyze Batch</button>
+      </form>
+    </div>
+    
+    <div class="tab-content" id="topic-tab">
+      <form id="topic-form">
+        <div class="form-group">
+          <label for="topic">Topic or Keyword</label>
+          <input type="text" id="topic" placeholder="Enter a topic (e.g. 'climate change')" required>
+        </div>
+        <div class="form-group">
+          <label for="max-articles">Number of Articles</label>
+          <input type="number" id="max-articles" min="1" max="20" value="5">
+        </div>
+        <button type="submit" id="topic-submit">Search & Analyze</button>
+      </form>
+    </div>
+    
+    <div id="error-container" style="display: none;" class="error"></div>
+    
+    <div id="results-container" style="display: none;" class="results"></div>
+  </div>
+  
+  <script>
+    // Tab switching
+    const tabs = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    let activeTab = 'url';
+    
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Remove active class from all tabs
+        tabs.forEach(t => t.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        
+        // Add active class to clicked tab
+        tab.classList.add('active');
+        const tabId = tab.dataset.tab;
+        document.getElementById(`${tabId}-tab`).classList.add('active');
+        activeTab = tabId;
+      });
+    });
+    
+    // Batch URL functionality
+    const urlContainer = document.getElementById('url-container');
+    const addUrlButton = document.getElementById('add-url');
+    
+    addUrlButton.addEventListener('click', () => {
+      const urlRow = document.createElement('div');
+      urlRow.className = 'url-row';
+      
+      const input = document.createElement('input');
+      input.type = 'url';
+      input.className = 'batch-url';
+      input.placeholder = 'https://example.com/article';
+      
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'remove-button';
+      removeButton.textContent = '✕';
+      removeButton.addEventListener('click', () => {
+        urlRow.remove();
+      });
+      
+      urlRow.appendChild(input);
+      urlRow.appendChild(removeButton);
+      urlContainer.appendChild(urlRow);
+    });
+    
+    // Form submission handlers
+    const urlForm = document.getElementById('url-form');
+    const batchForm = document.getElementById('batch-form');
+    const topicForm = document.getElementById('topic-form');
+    const errorContainer = document.getElementById('error-container');
+    const resultsContainer = document.getElementById('results-container');
+    
+    // Single URL analysis
+    urlForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const urlInput = document.getElementById('url');
+      const submitButton = document.getElementById('url-submit');
+      
+      if (!urlInput.value) return;
+      
+      // Reset UI
+      errorContainer.style.display = 'none';
+      resultsContainer.style.display = 'none';
+      
+      // Show loading state
+      const originalButtonText = submitButton.textContent;
+      submitButton.innerHTML = '<span class="spinner"></span> Analyzing...';
+      submitButton.disabled = true;
+      
+      try {
+        const response = await fetch('/analyze/url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: urlInput.value })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          displaySingleResult(data);
+        } else {
+          showError(data.error || 'An error occurred');
+        }
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        submitButton.innerHTML = originalButtonText;
+        submitButton.disabled = false;
+      }
+    });
+    
+    // Batch URL analysis
+    batchForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const urlInputs = document.querySelectorAll('.batch-url');
+      const submitButton = document.getElementById('batch-submit');
+      
+      const urls = Array.from(urlInputs).map(input => input.value).filter(url => url.trim() !== '');
+      
+      if (urls.length === 0) return;
+      
+      // Reset UI
+      errorContainer.style.display = 'none';
+      resultsContainer.style.display = 'none';
+      
+      // Show loading state
+      const originalButtonText = submitButton.textContent;
+      submitButton.innerHTML = '<span class="spinner"></span> Analyzing...';
+      submitButton.disabled = true;
+      
+      try {
+        const response = await fetch('/analyze/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ urls })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          displayBatchResults(data);
+        } else {
+          showError(data.error || 'An error occurred');
+        }
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        submitButton.innerHTML = originalButtonText;
+        submitButton.disabled = false;
+      }
+    });
+    
+    // Topic analysis
+    topicForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const topicInput = document.getElementById('topic');
+      const maxArticlesInput = document.getElementById('max-articles');
+      const submitButton = document.getElementById('topic-submit');
+      
+      if (!topicInput.value) return;
+      
+      // Reset UI
+      errorContainer.style.display = 'none';
+      resultsContainer.style.display = 'none';
+      
+      // Show loading state
+      const originalButtonText = submitButton.textContent;
+      submitButton.innerHTML = '<span class="spinner"></span> Analyzing...';
+      submitButton.disabled = true;
+      
+      try {
+        const response = await fetch('/analyze/topic', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            topic: topicInput.value, 
+            max_articles: parseInt(maxArticlesInput.value) 
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          displayTopicResults(data, topicInput.value);
+        } else {
+          showError(data.error || 'An error occurred');
+        }
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        submitButton.innerHTML = originalButtonText;
+        submitButton.disabled = false;
+      }
+    });
+    
+    // Display functions
+    function showError(message) {
+      errorContainer.textContent = `Error: ${message}`;
+      errorContainer.style.display = 'block';
+      resultsContainer.style.display = 'none';
     }
-
-    ReactDOM.createRoot(document.getElementById('app')).render(React.createElement(App));
+    
+    function displaySingleResult(result) {
+      resultsContainer.innerHTML = `
+        <h2>Analysis Results</h2>
+        <p><strong>URL:</strong> ${result.url}</p>
+        <p><strong>Sentiment:</strong> ${result.sentiment} (Confidence: ${result.confidence})</p>
+        ${result.rating ? `<p><strong>Rating:</strong> ${result.rating}/5</p>` : ''}
+        <p><strong>Excerpt:</strong> ${result.article_excerpt}</p>
+      `;
+      
+      if (result.top_entities) {
+        const entitiesHtml = result.top_entities.split(", ").map(entity => 
+          `<span class="entity">${entity}</span>`
+        ).join('');
+        
+        resultsContainer.innerHTML += `
+          <div>
+            <p><strong>Top Entities:</strong></p>
+            <div>${entitiesHtml}</div>
+          </div>
+        `;
+      }
+      
+      if (result.visualization) {
+        resultsContainer.innerHTML += `
+          <div class="visualization">
+            <img src="${result.visualization}" alt="Sentiment Analysis Visualization">
+          </div>
+        `;
+      }
+      
+      resultsContainer.style.display = 'block';
+    }
+    
+    function displayBatchResults(data) {
+      const results = data.results || [];
+      
+      resultsContainer.innerHTML = `
+        <h2>Batch Analysis Results</h2>
+        <p>Analyzed ${results.length} articles</p>
+      `;
+      
+      results.forEach(result => {
+        let resultHtml = `
+          <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 4px;">
+            <p><strong>URL:</strong> ${result.url}</p>
+            <p><strong>Sentiment:</strong> ${result.sentiment} (Confidence: ${result.confidence})</p>
+            ${result.rating ? `<p><strong>Rating:</strong> ${result.rating}/5</p>` : ''}
+            <p><strong>Excerpt:</strong> ${result.article_excerpt}</p>
+        `;
+        
+        if (result.top_entities) {
+          const entitiesHtml = result.top_entities.split(", ").map(entity => 
+            `<span class="entity">${entity}</span>`
+          ).join('');
+          
+          resultHtml += `
+            <div>
+              <p><strong>Top Entities:</strong></p>
+              <div>${entitiesHtml}</div>
+            </div>
+          `;
+        }
+        
+        resultHtml += `</div>`;
+        resultsContainer.innerHTML += resultHtml;
+      });
+      
+      if (data.visualization) {
+        resultsContainer.innerHTML += `
+          <div class="visualization">
+            <img src="${data.visualization}" alt="Batch Sentiment Analysis Visualization">
+          </div>
+        `;
+      }
+      
+      resultsContainer.style.display = 'block';
+    }
+    
+    function displayTopicResults(data, topic) {
+      const results = data.results || [];
+      
+      resultsContainer.innerHTML = `
+        <h2>Topic Analysis: ${topic}</h2>
+        <p>Analyzed ${results.length} articles</p>
+      `;
+      
+      results.forEach(result => {
+        let resultHtml = `
+          <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 4px;">
+            <p><strong>Title:</strong> ${result.title}</p>
+            <p><strong>Source:</strong> ${result.source}</p>
+            <p><strong>URL:</strong> <a href="${result.url}" target="_blank" rel="noopener noreferrer">${result.url}</a></p>
+            <p><strong>Sentiment:</strong> ${result.sentiment} (Confidence: ${result.confidence})</p>
+            ${result.rating ? `<p><strong>Rating:</strong> ${result.rating}/5</p>` : ''}
+            <p><strong>Excerpt:</strong> ${result.article_excerpt}</p>
+        `;
+        
+        if (result.top_entities) {
+          const entitiesHtml = result.top_entities.split(", ").map(entity => 
+            `<span class="entity">${entity}</span>`
+          ).join('');
+          
+          resultHtml += `
+            <div>
+              <p><strong>Top Entities:</strong></p>
+              <div>${entitiesHtml}</div>
+            </div>
+          `;
+        }
+        
+        resultHtml += `</div>`;
+        resultsContainer.innerHTML += resultHtml;
+      });
+      
+      if (data.visualization) {
+        resultsContainer.innerHTML += `
+          <div class="visualization">
+            <img src="${data.visualization}" alt="Topic Sentiment Analysis Visualization">
+          </div>
+        `;
+      }
+      
+      resultsContainer.style.display = 'block';
+    }
   </script>
 </body>
 </html>
