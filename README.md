@@ -67,7 +67,3 @@ python press_sentiment_analysis.py topic "climate change" 5
   - React
   - Radix UI components
   - Custom CSS
-
-## License
-
-MIT
